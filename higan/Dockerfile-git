@@ -1,0 +1,37 @@
+FROM fedora:21
+
+# similar to Dockerfile, but creates from source from gitlab.com
+
+RUN yum install -y \
+    alsa-lib-devel \
+    ca-certificates \
+    curl \
+    gcc-c++ \
+    gtk2-devel \
+    gtksourceview2-devel \
+    libao-devel \
+    libX11-devel \
+    libXv-devel \
+    make \
+    openal-soft-devel \
+    pulseaudio-libs-devel \
+    SDL-devel \
+    sudo \
+    systemd-devel \
+    tar
+
+# will not let me 'make install' as root, so create a new user
+RUN adduser user && \
+    chmod 777 /usr && \
+    echo 'user ALL = NOPASSWD: /usr/bin/make' >> /etc/sudoers
+
+ENV SOURCE_URL=https://gitlab.com/higan/higan/repository/archive.tar.gz
+ENV SOURCE_DIR=/usr/higan.git
+
+USER user
+RUN curl -sSL ${SOURCE_URL} | tar -vxz -C /usr && \
+    cd ${SOURCE_DIR} && make -j4 && make install && \
+    rm ${SOURCE_DIR} -rf
+
+WORKDIR /home/user
+ENTRYPOINT ["/home/user/.local/bin/tomoko"]
